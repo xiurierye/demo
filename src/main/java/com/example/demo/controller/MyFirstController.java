@@ -52,7 +52,7 @@ public class MyFirstController {
         response.setHeader("Authorization", "Bearer eyJrIjoidGFIOW41aHRoMXZ5aTkxcDBNYUxteDk3TU9zVUhoSkUiLCJuIjoiZ3JhZmFuYV90ZXN0IiwiaWQiOjF9");
 
         List<String> result = new ArrayList<String>();
-        result.add("ALL");//  黑色什么什么 统计数据
+
         result.add("黑色每日统计");//  黑色什么什么 统计数据
         result.add("焦煤每日统计"); // 焦煤的什么什么统计数据
         result.add("焦煤和黑色每日差值");
