@@ -8,7 +8,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.mongodb.client.MongoDatabase;
 import org.joda.time.DateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.CriteriaDefinition;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -23,6 +29,9 @@ import java.util.stream.IntStream;
 @RestController
 @RequestMapping
 public class MyFirstController {
+
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     //设置数据源
     @RequestMapping()
@@ -52,11 +61,15 @@ public class MyFirstController {
         response.setHeader("Authorization", "Bearer eyJrIjoidGFIOW41aHRoMXZ5aTkxcDBNYUxteDk3TU9zVUhoSkUiLCJuIjoiZ3JhZmFuYV90ZXN0IiwiaWQiOjF9");
 
         List<String> result = new ArrayList<String>();
+//
+//        result.add("黑色每日统计");//  黑色什么什么 统计数据
+//        result.add("焦煤每日统计"); // 焦煤的什么什么统计数据
+//        result.add("焦煤和黑色每日差值");
 
-        result.add("黑色每日统计");//  黑色什么什么 统计数据
-        result.add("焦煤每日统计"); // 焦煤的什么什么统计数据
-        result.add("焦煤和黑色每日差值");
-        return result;
+        Set<String> collectionNames = mongoTemplate.getCollectionNames();
+
+
+        return Lists.newArrayList(collectionNames);
 
     }
 
@@ -64,66 +77,21 @@ public class MyFirstController {
     @RequestMapping("/query")
     @ResponseBody
     public List query(@RequestBody Map<String, Object> params, HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
-//        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
-//        List<Map> targetList = (List) params.get("targets");
-//        for (Map targetMap : targetList) {
-//            String target = (String) targetMap.get("target");
-//            //Map scopedVars = (Map) params.get("scopedVars");
-//            //Map IP = (Map) scopedVars.get("IP");
-//            //String nodeIP = (String) IP.get("text");
-//            if (target.equals("CPU")) {
-//                result.add(strjson());//放入json数据
-//            } else if (target.equals("RAM")) {
-//                result.add(null);//放入json数据
-//            } else if (target.equals("LOAD")) {
-//                result.add(null);
-//            } else if (target.equals("SWAP")) {
-//                result.add(null);
-//            } else if (target.equals("DISK")) {
-//                result.add(null);
-//            } else if (target.equals("NET")) {
-//                result.add(null);
-//            }
-//        }
-//        response.setHeader("Access-Control-Allow-Headers", "accept, content-type");
-//        response.setHeader("Access-Control-Allow-Methods", "POST");
-//        response.setHeader("Access-Control-Allow-Origin", "*");
-//        response.setHeader("Accept", "application/json");
-//        response.setHeader("Content-Type", "application/json");
-//        response.setHeader("Authorization", "Bearer eyJrIjoidGFIOW41aHRoMXZ5aTkxcDBNYUxteDk3TU9zVUhoSkUiLCJuIjoiZ3JhZmFuYV90ZXN0IiwiaWQiOjF9");
-//        Collections.sort(result, (o1, o2) -> {
-//            String name1 = String.valueOf(o1.get("target").toString());
-//            String name2 = String.valueOf(o2.get("target").toString());
-//            return name1.compareTo(name2);
-//        });
-//        return result;
-
-        DateTime now = DateTime.now();
-
         HashMap<String, Object> map = Maps.newHashMap();
 
-        map.put("target","黑色每日统计");
+        map.put("target","testMongo");
 
 
-        List<ArrayList<? extends Number>> collect = IntStream.rangeClosed(1, 20)
-                .boxed()
-                .map(integer -> Lists.newArrayList(integer * 10, now.minusHours(integer).getMillis()))
+        Query query = Query.query(new Criteria());
+        List<ArrayList<Object>> startup_log = mongoTemplate.find(query, Map.class, "startup_log")
+                .stream()
+                .map(item -> Lists.newArrayList(item.getOrDefault("pid",0), ((Date) item.getOrDefault("startTime", null)).getTime()))
                 .collect(Collectors.toList());
-        map.put("datapoints",collect);
+        map.put("datapoints",startup_log);
 
 
-        HashMap<String, Object> map1 = Maps.newHashMap();
 
-        map1.put("target","焦煤每日统计");
-
-
-        List<ArrayList<? extends Number>> collect1 = IntStream.rangeClosed(1, 20)
-                .boxed()
-                .map(integer -> Lists.newArrayList(integer * 10+50, now.minusHours(integer).getMillis()))
-                .collect(Collectors.toList());
-        map1.put("datapoints",collect1);
-
-        return Lists.newArrayList(map,map1);
+        return Lists.newArrayList(map);
     }
 
     private Map<String, Object> strjson() throws JsonProcessingException {
