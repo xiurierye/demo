@@ -8,9 +8,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+
 import com.mongodb.client.MongoDatabase;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.CriteriaDefinition;
@@ -66,6 +68,10 @@ public class MyFirstController {
 //        result.add("焦煤每日统计"); // 焦煤的什么什么统计数据
 //        result.add("焦煤和黑色每日差值");
 
+//        MongoDatabase db = mongoTemplate.getDb();
+//        db.listCollectionNames().forEach(System.out::println);
+
+
         Set<String> collectionNames = mongoTemplate.getCollectionNames();
 
 
@@ -76,22 +82,30 @@ public class MyFirstController {
     //查询
     @RequestMapping("/query")
     @ResponseBody
-    public List query(@RequestBody Map<String, Object> params, HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
-        HashMap<String, Object> map = Maps.newHashMap();
-
-        map.put("target","testMongo");
-
-
-        Query query = Query.query(new Criteria());
-        List<ArrayList<Object>> startup_log = mongoTemplate.find(query, Map.class, "startup_log")
-                .stream()
-                .map(item -> Lists.newArrayList(item.getOrDefault("pid",0), ((Date) item.getOrDefault("startTime", null)).getTime()))
-                .collect(Collectors.toList());
-        map.put("datapoints",startup_log);
+    public List query(@RequestBody GrafanaQueryRequest params, HttpServletRequest request, HttpServletResponse response) throws JsonProcessingException {
 
 
 
-        return Lists.newArrayList(map);
+        //目前之只支持table的數據
+        List<HashMap<String, Object>> collect1 = params.getTargets().stream().map(target -> {
+            HashMap<String, Object> map = Maps.newHashMap();
+
+            map.put("target", target.getTarget());
+
+            Query query = Query.query(new Criteria());
+            List<ArrayList<Object>> collect = mongoTemplate.find(query, Map.class, target.getTarget())
+                    .stream()
+                    .map(item -> Lists.newArrayList(item.getOrDefault("volume", 0), ((Date) item.getOrDefault("date", null)).getTime()))
+                    .collect(Collectors.toList());
+
+
+            map.put("datapoints", collect);
+
+            return map;
+
+        }).collect(Collectors.toList());
+        return collect1;
+
     }
 
     private Map<String, Object> strjson() throws JsonProcessingException {
